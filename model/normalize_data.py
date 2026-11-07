@@ -2,8 +2,15 @@
 import numpy as np
 from numba import njit
 
+# Set containing the flags to enable (omitting 'nnan' and 'ninf' keeps them disabled)
+FASTMATH_SAFE = {
+    "reassoc",  # Enables SIMD auto-vectorization across reduction loops
+    "contract",  # Enables Fused Multiply-Add (FMA) instructions
+    "arcp",  # Reciprocal approximations for division
+    "nsz",  # Identical handling of +0.0 and -0.0
+}
 
-@njit(cache=True, fastmath=True)
+@njit(cache=True, fastmath=FASTMATH_SAFE)
 def fast_normalize_series_numba(x: np.ndarray) -> np.ndarray:
     """Fused 1D linear interpolation, Z-score scaling, and clipping in Numba.
 
