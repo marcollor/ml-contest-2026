@@ -3,3 +3,4 @@ data/*.npz
 # local outputs
 results/
 __pycache__/
+.venv
