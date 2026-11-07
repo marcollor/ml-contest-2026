@@ -14,7 +14,7 @@ def main():
     # 1.- Gets arguments
     p = argparse.ArgumentParser()
     p.add_argument('--repo', default='.')
-    p.add_argument('--out', default='model/data')
+    p.add_argument('--out', default='data')
     a = p.parse_args()
 
     # 2.- Gets paths and downloads dataset if missing
