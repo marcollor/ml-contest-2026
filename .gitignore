@@ -6,3 +6,22 @@ __pycache__/
 .venv
 INFORME_FINAL_GDG_UAM.pdf
 PLAN_TAREAS_DOS_PERSONAS_30_HORAS (1).pdf
+*.json
+*.log
+weights.pt
+
+# Local research, diagnostics and experiment runners (kept on disk).
+/research/
+/PROMPT_RESEARCH_8H.md
+/src/analyze_shift.py
+/src/run_shift_comparison.py
+/tests/test_shift_training.py
+
+# Keep existing tracked models; exclude additional local experimental artifacts.
+/models/*
+!/models/adaptative_model/
+
+# The final model must carry its checkpoint and saved configuration in Git.
+!/models/adaptative_model/weights.pt
+!/models/adaptative_model/training.json
+!/models/adaptative_model/history.json
