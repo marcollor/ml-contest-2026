@@ -35,7 +35,7 @@ Run commands from the repository root:
 
 ```bash
 python src/prepare_data.py
-python src/train.py --check-only
+python src/train.py --model-dir models/temporal_cnn --check-only
 python src/train.py --model-dir models/temporal_cnn --replace
 ```
 
@@ -97,3 +97,39 @@ net = load_best_model("models", criterion="accuracy", device="cpu")
 `load_best_model` loads the selected architecture and weights and sets evaluation
 mode. Preprocess raw inputs with the same routine used during that model's
 training before passing them to the network.
+
+## Command-line help
+
+All local commands support `-h` and `--help`. Help includes their options and
+default values:
+
+```bash
+python src/train.py --help
+python src/prepare_data.py --help
+python src/model_registry.py --help
+```
+
+An unknown command, option, invalid value, or missing required argument prints
+an error followed by the complete help menu and exits with status 2 before
+training, downloading data, or updating the registry. Option names must be
+written in full; abbreviations are rejected. Explicit help exits with status 0.
+
+### Training argument rules
+
+`--model-dir DIR` is required, including for `--check-only`; explicitly select
+the architecture to use. `--out` is retained as an alias for the same directory.
+Running `python src/train.py` without arguments displays help and exits.
+
+The help menu groups model/input paths, training settings, runtime settings,
+and execution mode, and includes examples. All other options have defaults:
+`--repo` uses the repository containing the script (independent of the working
+directory), while data and split paths default to `data/train_100k.npz` and
+`data/split_indices.npz` relative to that repository. Parsed paths are printed
+as absolute paths in the effective configuration.
+
+Input files and architecture.py must exist. Epochs and threads must be positive
+integers; the seed must be in [0, 4294967295]. Selecting CUDA requires an available
+CUDA device. `--check-only` and `--replace` are mutually exclusive. Existing
+weights require `--replace` for training, but do not prevent a read-only check.
+Epochs and the checkpoint criterion apply to training only. Validation errors
+show the full help menu before any dataset loading or output writes.
