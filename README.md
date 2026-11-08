@@ -15,6 +15,10 @@ prediction-time budget.
 | `data/train_100k.npz` | training data, 100,000 labeled samples (download it, see below)         |
 | `data/test_demo.npz`  | demo test set, 400 labeled samples drawn like the evaluation data       |
 
+## Local model training
+
+Training and preprocessing scripts are in `src/`; architectures and trained outputs are in `models/`, one subdirectory per model. See [the training workflow](src/README.md) for commands and directory details.
+
 ## Setup
 
 Requires Python 3.10+ and numpy (scikit-learn for the baseline).

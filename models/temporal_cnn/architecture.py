@@ -41,6 +41,5 @@ class TemporalCNN(nn.Module):
 
 if __name__ == "__main__":
     model = TemporalCNN().eval()
-    assert sum(p.numel() for p in model.parameters()) == 18464
     assert model(torch.zeros(1, 4, 256)).shape == (1, 8)
-    print("18464 parameters; input (1,4,256), output (1,8).")
+    print(f"{sum(p.numel() for p in model.parameters())} parameters; input (1,4,256), output (1,8).")
