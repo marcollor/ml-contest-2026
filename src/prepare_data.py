@@ -1,6 +1,6 @@
 """Verified download, splits and IID for harness."""
 
-import argparse
+from cli import HelpArgumentParser
 import hashlib
 import sys
 import urllib.request
@@ -12,9 +12,9 @@ from sklearn.model_selection import train_test_split
 
 def main():
     # 1.- Gets arguments
-    p = argparse.ArgumentParser()
-    p.add_argument('--repo', default='.')
-    p.add_argument('--out', default='data')
+    p = HelpArgumentParser(description=__doc__)
+    p.add_argument('--repo', default='.', help='Repository root directory.')
+    p.add_argument('--out', default='data', help='Directory for split_indices.npz and val.npz.')
     a = p.parse_args()
 
     # 2.- Gets paths and downloads dataset if missing
