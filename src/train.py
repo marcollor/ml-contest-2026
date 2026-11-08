@@ -117,6 +117,8 @@ registry.json is refreshed after training. No arguments displays this help.
     )
     training = parser.add_argument_group("Training settings (used when training)")
     training.add_argument("--epochs", type=int, default=24, metavar="N", help="Maximum epochs; must be positive.")
+    training.add_argument("--patience", type=int, default=10, metavar="N",
+                          help="Epochs without improvement before early stopping; 0 disables it.")
     training.add_argument(
         "--criterion", choices=["score", "accuracy"], default="score",
         help="Primary checkpoint metric; the other metric breaks ties.",
@@ -142,6 +144,8 @@ def parse_arguments(argv=None):
     args = parser.parse_args(arguments)
     if args.epochs < 1 or args.threads < 1:
         parser.error("--epochs and --threads must be positive integers")
+    if args.patience < 0:
+        parser.error("--patience must be a nonnegative integer")
     if not 0 <= args.seed < 2**32:
         parser.error("--seed must be between 0 and 4294967295")
 
@@ -285,8 +289,8 @@ def main() -> None:
             bad += 1
         (out / "history.json").write_text(json.dumps(history, indent=2), encoding="utf-8")
         print(record, flush=True)
-        # Train at least eight epochs, then stop after four without improvement.
-        if epoch + 1 >= 8 and bad >= 10:
+        # Train at least eight epochs; patience=0 runs all requested epochs.
+        if args.patience and epoch + 1 >= 8 and bad >= args.patience:
             break
 
     # 13.- Write the final training configuration and summary.

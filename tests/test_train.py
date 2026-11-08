@@ -131,6 +131,8 @@ class TrainingArgumentsTests(unittest.TestCase):
     def test_defaults_and_paths(self):
         args = train.parse_arguments(self.base)
         self.assertEqual(args.epochs, 24)
+        self.assertEqual(args.patience, 10)
+        self.assertEqual(train.parse_arguments(self.base + ["--patience", "0"]).patience, 0)
         self.assertEqual(args.device, "cpu")
         self.assertEqual(args.data, str(self.root / "data/train_100k.npz"))
         self.assertEqual(args.model_dir, str(self.directory))
@@ -143,6 +145,7 @@ class TrainingArgumentsTests(unittest.TestCase):
         for arguments, message in (
             (["--epochs", "0"], "positive"),
             (["--threads", "-1"], "positive"),
+            (["--patience", "-1"], "nonnegative"),
             (["--seed", "-1"], "--seed"),
             (["--seed", str(2**32)], "--seed"),
             (["--check-only", "--replace"], "not allowed"),
