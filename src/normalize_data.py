@@ -1,72 +1,47 @@
-"""Single-sample mean imputation and global normalization compiled with Numba."""
+"""Fixed V024 preprocessing for raw (4, 256) signals."""
 
 import numpy as np
 from numba import njit
 
-# Preserve NaN/Inf checks by keeping the nnan and ninf flags disabled.
-FASTMATH_SAFE = {
-    "reassoc",  # Allow vectorization across reductions.
-    "contract",  # Allow fused multiply-add instructions.
-    "arcp",  # Allow reciprocal approximations for division.
-    "nsz",  # Treat positive and negative zero identically.
-}
+ROBUST_CLIP = 6.0
+EPSILON = 1e-6
+CLIP = 10.0
+
+PREPROCESSING = dict(
+    version=1,
+    imputation="linear",
+    normalization="channel-zscore",
+    robust_clip=ROBUST_CLIP,
+    epsilon=EPSILON,
+    clip=CLIP,
+)
+
+# Keep NaN and infinity checks enabled while allowing vectorized reductions.
+FASTMATH_SAFE = {"reassoc", "contract", "arcp", "nsz"}
 
 
 @njit(cache=True, fastmath=FASTMATH_SAFE)
-def fast_normalize_series_numba(x: np.ndarray) -> np.ndarray:
-    """Impute channel means, apply a global Z-score, and clip to [-10, 10].
-
-    Parameters
-    ----------
-    x : np.ndarray
-        Raw sample of shape (4, 256). NaN and infinity are treated as missing.
-        Missing values are replaced with the mean of finite values in their
-        channel. A channel with no finite values is filled with zeros.
-
-    Returns
-    -------
-    np.ndarray
-        Float32 array of shape (1, 4, 256). A single mean and population
-        variance are computed over all 1024 values after imputation, separately
-        for each sample (not across the dataset). Scaling uses sqrt(var + 1e-6).
-        The input is not modified. Compile during untimed setup if needed.
-    """
-    if x.shape != (4, 256):
+def preprocess_series(x):
+    """Return normalized float32 data of shape (1, 4, 256) without modifying x."""
+    if x.ndim != 2 or x.shape != (4, 256):
         raise ValueError("Expected a sample of shape (4, 256)")
 
-    imputed = np.empty((4, 256), dtype=np.float64)
-    out = np.empty((1, 4, 256), dtype=np.float32)
+    imputed = np.empty((4, 256), np.float64)
+    for channel in range(4):
+        finite_ids = np.where(np.isfinite(x[channel]))[0]
+        if len(finite_ids) == 0:
+            imputed[channel] = 0.0
+            continue
 
-    for c in range(4):
-        channel_sum = 0.0
-        finite_count = 0
-        for j in range(256):
-            value = np.float64(x[c, j])
-            if np.isfinite(value):
-                channel_sum += value
-                finite_count += 1
-        channel_mean = channel_sum / finite_count if finite_count else 0.0
-        for j in range(256):
-            value = np.float64(x[c, j])
-            imputed[c, j] = value if np.isfinite(value) else channel_mean
+        values = x[channel, finite_ids].astype(np.float64)
+        median = np.median(values)
+        scale = max(1.4826 * np.median(np.abs(values - median)), np.sqrt(EPSILON))
+        bound = ROBUST_CLIP * scale
+        values = np.minimum(np.maximum(values, median - bound), median + bound)
+        imputed[channel] = np.interp(np.arange(256), finite_ids, values)
 
-    # Compute shared statistics over all channels and time steps after imputation.
-    total = 0.0
-    for c in range(4):
-        for j in range(256):
-            total += imputed[c, j]
-    mean = total / 1024.0
+    for channel in range(4):
+        imputed[channel] -= np.mean(imputed[channel])
+        imputed[channel] /= np.sqrt(np.mean(imputed[channel] ** 2) + EPSILON)
 
-    # Center before squaring to avoid cancellation for nearly constant samples.
-    squared_deviations = 0.0
-    for c in range(4):
-        for j in range(256):
-            delta = imputed[c, j] - mean
-            squared_deviations += delta * delta
-    inv_std = 1.0 / np.sqrt(squared_deviations / 1024.0 + 1e-6)
-
-    for c in range(4):
-        for j in range(256):
-            value = (imputed[c, j] - mean) * inv_std
-            out[0, c, j] = min(10.0, max(-10.0, value))
-    return out
+    return np.minimum(np.maximum(imputed, -CLIP), CLIP).astype(np.float32).reshape(1, 4, 256)

@@ -1,0 +1,127 @@
+{
+  "recipe": "transfer_8h_v1; isolated runner; worst clean/stress score selection",
+  "train_n": 70000,
+  "dev_n": 5000,
+  "epochs": 80,
+  "best_epoch": 61,
+  "batch_size": 256,
+  "parameters": 7352,
+  "preprocessing": {
+    "version": 1,
+    "imputation": "linear",
+    "normalization": "channel-zscore",
+    "robust_clip": 6,
+    "epsilon": 1e-06,
+    "clip": 10.0
+  },
+  "seed": 20261114,
+  "optimizer": {
+    "name": "AdamW",
+    "lr": 0.002,
+    "betas": [
+      0.9,
+      0.999
+    ],
+    "eps": 1e-08,
+    "weight_decay": 0.001
+  },
+  "scheduler": {
+    "name": "CosineAnnealingLR",
+    "T_max": 80,
+    "eta_min": 5e-05
+  },
+  "augmentation": {
+    "missing_max": 0.06,
+    "noise_max": 0.6,
+    "spike_probability": 0.002,
+    "spike_scale": 10,
+    "gain_min": 0.6,
+    "gain_max": 1.6,
+    "clean_mix": 0.25,
+    "cached_stats": true
+  },
+  "stress_validation": {
+    "version": 1,
+    "seed": 20261113,
+    "center_channels": true,
+    "missing_max": 0.03,
+    "noise_max": 0.3,
+    "spike_probability": 0.001,
+    "spike_scale": 10.0,
+    "gain_min": 0.6,
+    "gain_max": 1.6
+  },
+  "class_weights": [
+    0.7659801840782166,
+    0.8696173429489136,
+    0.8781036138534546,
+    1.0241210460662842,
+    1.0169329643249512,
+    1.0045051574707031,
+    1.2038217782974243,
+    1.2369177341461182
+  ],
+  "runtime": {
+    "device": "cuda",
+    "threads": 8,
+    "prep_threads": 8,
+    "workers": 1,
+    "deterministic_algorithms": true,
+    "amp": false
+  },
+  "best_recall": {
+    "dev": [
+      0.83875,
+      0.9985734664764622,
+      0.9813486370157819,
+      0.9261744966442953,
+      0.9766277128547579,
+      0.9703947368421053,
+      0.7845849802371542,
+      0.8559837728194726
+    ],
+    "stress": [
+      0.8225,
+      0.9971469329529244,
+      0.9799139167862266,
+      0.924496644295302,
+      0.9732888146911519,
+      0.96875,
+      0.7727272727272727,
+      0.8417849898580122
+    ]
+  },
+  "architecture_sha256": "504d7dbafc6da9f843beef96fe2ad7d1e6700fedf4cb23eaf7401c2acf0986ea",
+  "weights_sha256": "dd09948e3c59b1956cec702e06a254f53d2b728aafce40430e437de4263cd9ca",
+  "data_sha256": "1c231e9a807c348b34290415f56e7c7b99543a81673a9d3cef1002b1a42e5668",
+  "split_sha256": "f6ee898c4cb79001e7d742ce0b813f01a8686565af5f5a3f346432ad3038e489",
+  "train_ids_sha256": "654d9946965593be2c70f070418c8362735d5f79d1b1b3ef4bae5dbf36c75a7b",
+  "source_sha256": {
+    "harness.py": "3a30cb22daab98baa12ea5ef03cf37584ed84f4388b4b8221ccdb55a3506826b",
+    "cached_augmentation.py": "4d175d0ea2524aa0ae8fa3f10870a509f0867093e522f60f9ccaa080e7239d69",
+    "common.py": "e1b71584efb5ac1f6ab8f7e3bf68a16bf0071a113256acc2256784a5f5ec170f",
+    "train.py": "0ca77252913da82a42a19e5a55f82d6018c2ecc7ff52e7156389ad56fa01c3d2",
+    "augment_data.py": "1cd30a6bbf01f894ffe5e54d665e612eb59734bcbb0cd5df57b12a260a714907",
+    "normalize_data.py": "0b0c7309cd6554a8c4134d5ab12df9e9a40d51231da28fb8311c56c97a0b2e65",
+    "competition_api.py": "89ee0aa9c6e74356ec89503cdab2ac490cbd20feb6c8e86b494ac9aa383cf576",
+    "run_experiment.py": "820fdf4eb88ddd2ba483946b977bf3ff04c71b9272a2972c329aa819ecee0f3b"
+  },
+  "retraining": {
+    "command": "python src/train.py",
+    "output": "model/retrained.pt",
+    "shuffle_seed": 20262114,
+    "augmentation_seed": 20263114,
+    "clean_sampling": "independent_per_sample",
+    "cached_augmentation_stats": false,
+    "selection": "max_worst_score_then_accuracy",
+    "device": "cuda_if_available_else_cpu",
+    "requirements": "requirements.txt",
+    "source_sha256": {
+      "src/train.py": "ae9c5f171a956966d56c8a76cfd78b8cdd60186b7539eec3cdcf7f6ba4b6b28c",
+      "src/normalize_data.py": "6fd3d7ccbb279f4d1a202682337b1f26efbcd2f66ae2bfcd4e4372ab103e20bb",
+      "src/augment_data.py": "1cd30a6bbf01f894ffe5e54d665e612eb59734bcbb0cd5df57b12a260a714907",
+      "harness.py": "3a30cb22daab98baa12ea5ef03cf37584ed84f4388b4b8221ccdb55a3506826b",
+      "competition_api.py": "89ee0aa9c6e74356ec89503cdab2ac490cbd20feb6c8e86b494ac9aa383cf576"
+    }
+  }
+}

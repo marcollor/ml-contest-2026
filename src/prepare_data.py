@@ -1,4 +1,4 @@
-"""Verified download, splits and IID for harness."""
+"""Download the datasets and prepare the fixed training and IID splits."""
 
 from cli import HelpArgumentParser
 import hashlib
@@ -10,24 +10,24 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 
 
-def main():
-    # 1.- Gets arguments
-    p = HelpArgumentParser(description=__doc__)
-    p.add_argument('--repo', default='.', help='Repository root directory.')
-    p.add_argument('--out', default='data', help='Directory for split_indices.npz and val.npz.')
-    a = p.parse_args()
+ROOT = Path(__file__).resolve().parents[1]
+RELEASES = "https://github.com/GDG-UAM/ml-contest-materials/releases"
 
-    # 2.- Gets paths and downloads dataset if missing
-    repo, out = Path(a.repo).resolve(), Path(a.out).resolve()
-    sys.path.insert(0, str(repo))
-    data = repo / 'data/train_100k.npz'
-    data.parent.mkdir(parents=True, exist_ok=True)
-    if not data.exists():
-        url = ('https://github.com/GDG-UAM/ml-contest-materials/releases/'
-               'download/v1.0/train_100k.npz')
-        temp = data.with_suffix('.download')
-        urllib.request.urlretrieve(url, temp)
-        temp.replace(data)
+
+def download_if_missing(path, url):
+    if not path.exists():
+        temporary = path.with_suffix(".download")
+        urllib.request.urlretrieve(url, temporary)
+        temporary.replace(path)
+
+
+def main(argv=None):
+    HelpArgumentParser(description=__doc__).parse_args(argv)
+    sys.path.insert(0, str(ROOT))
+    out = ROOT / "data"
+    out.mkdir(parents=True, exist_ok=True)
+    data = out / "train_100k.npz"
+    download_if_missing(data, f"{RELEASES}/download/v1.0/train_100k.npz")
 
     # 3.- Verifies dataset integrity and loads it
     assert data.stat().st_size == 413201540, 'Unexpected dataset size.'
@@ -51,16 +51,15 @@ def main():
     order = np.random.default_rng(seed).permutation(tr)
     parts = dict(train=order[:70000], reserve=order[70000:], dev=dev, iid=iid)
     assert len(np.unique(np.concatenate(list(parts.values())))) == 100000, 'Unexpected partition sizes'
-    
+
     # 5.- Saves split
-    out.mkdir(parents=True, exist_ok=True)
     np.savez(out / 'split_indices.npz', **parts)
     np.savez(out / 'val.npz', series=ds.series[iid], labels=ds.labels[iid],
             **{'meta__' + k: v[iid] for k, v in ds.meta.items()})
     print('Verification successful:', {k: len(v) for k, v in parts.items()})
     print('Harness file:', out / 'val.npz')
+    download_if_missing(out / "test_demo.npz", f"{RELEASES}/latest/download/test_demo.npz")
 
 if __name__ == '__main__':
     main()
 
-    

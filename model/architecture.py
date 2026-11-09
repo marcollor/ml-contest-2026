@@ -71,8 +71,27 @@ class TemporalCNN(nn.Module):
         return self.fc(torch.cat((mean, std), dim=1))
 
 
-if __name__ == "__main__":
-    model = TemporalCNN().eval()
-    with torch.inference_mode():
-        assert model(torch.zeros(1, 4, 256)).shape == (1, 8)
-    print(f"{sum(p.numel() for p in model.parameters())} parameters; input (1,4,256), output (1,8).")
+# Hypothesis H4: direct second-order temporal/channel relations supplement
+# pooled learned features after channel-wise normalization removes gain shortcuts.
+BaseTemporalCNN = TemporalCNN
+class TemporalCNN(BaseTemporalCNN):
+    def __init__(self):
+        super().__init__()
+        self.relations = nn.Sequential(nn.Linear(30, 16), nn.ReLU())
+        self.fc = nn.Linear(80, 8)
+
+    def forward(self, x):
+        z = self.body(x)
+        pooled = torch.cat((z.mean(-1), torch.sqrt(z.var(-1, unbiased=False)+1e-6)), 1)
+        values = []
+        for lag in (0, 2, 8):
+            for a in range(4):
+                for b in range(a+1, 4):
+                    left = x[:, a] if lag == 0 else x[:, a, :-lag]
+                    right = x[:, b] if lag == 0 else x[:, b, lag:]
+                    values.append((left*right).mean(-1))
+        for lag in (1, 4, 16):
+            for channel in range(4):
+                values.append((x[:,channel,:-lag]*x[:,channel,lag:]).mean(-1))
+        relations = self.relations(torch.stack(values, 1))
+        return self.fc(torch.cat((pooled, relations), 1))
