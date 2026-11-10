@@ -14,7 +14,7 @@ curl -fL -o data/test_demo.npz https://github.com/GDG-UAM/ml-contest-materials/r
 python harness.py evaluate --model model.py --source file:data/test_demo.npz
 ```
 
-El comando usa las 400 muestras de demostración. Para probar el límite de tiempo con el conjunto de entrenamiento, descárgalo según [data/README.md](data/README.md) y ejecuta `python harness.py evaluate --model model.py`.
+El comando usa las 400 muestras de demostración. La última celda de [colab.ipynb](colab.ipynb) comprueba la entrega desde un clon del repositorio de GitHub. Para probar el límite de tiempo con el conjunto de entrenamiento, descárgalo según [data/README.md](data/README.md) y ejecuta `python harness.py evaluate --model model.py`.
 
 [Instrucciones oficiales de entrega](https://github.com/GDG-UAM/ml-contest-materials#your-submission). Una vez publicado el repositorio de GitHub, comprueba que los organizadores tienen acceso al clon y envíales el enlace por correo según esas instrucciones.
 
@@ -24,7 +24,8 @@ El comando usa las 400 muestras de demostración. Para probar el límite de tiem
 | --- | --- |
 | `model.py`, `requirements.txt` | Punto de entrada y dependencia de inferencia |
 | `native/` | Código C, preprocesamiento y carga desde Python |
-| `model/` | Pesos nativos, checkpoint PyTorch, grafo ONNX y metadatos |
+| `model/weights.bin`, `model/model.onnx` | Pesos de inferencia y grafo de referencia |
+| `model/training/` | Checkpoint PyTorch, historial y configuración del entrenamiento |
 | `src/` | Arquitectura PyTorch, preparación de datos y entrenamiento |
 | `tools/` | Exportación de pesos y comparación con ONNX Runtime |
 | `harness.py`, `competition_api.py`, `colab.ipynb` | Material oficial de evaluación |

@@ -9,17 +9,17 @@ captures temporal and cross-channel relationships. It accepts four channels
 with 256 time steps and returns a class from 0 to 7.
 
 The contest entry point uses the native C engine and `model/weights.bin`.
-PyTorch defines the trainable network, and ONNX is the reference used to pack
-and verify its native weights. See the [root README](../README.md) for export
+The engine checks the packed weights against `model/model.onnx`. The PyTorch
+checkpoint and its training records are in [training/](training/). See the [root README](../README.md) for export
 and validation commands.
 
 ## Running the model
 
+Download the demo dataset as described in [data/README.md](../data/README.md).
 From the repository root:
 
 ```bash
 python -m pip install -r requirements.txt
-python src/prepare_data.py
 python src/evaluate.py
 ```
 
@@ -45,7 +45,8 @@ normalization or normalize the input twice.
 
 ## Checkpoint provenance
 
-`history.json` records loss, accuracy and score by epoch. `training.json`
+[history.json](training/history.json) records loss, accuracy and score by epoch.
+[training.json](training/training.json)
 records the original recipe, file fingerprints and recall for the selected
 epoch.
 
@@ -62,5 +63,5 @@ this package's runtime:
 The demo was a known diagnostic set. These results do not guarantee equivalent
 performance on new acquisitions; class 6 remains a weak point.
 
-SHA-256 of `weights.pt`:
+SHA-256 of [weights.pt](training/weights.pt):
 `dd09948e3c59b1956cec702e06a254f53d2b728aafce40430e437de4263cd9ca`.

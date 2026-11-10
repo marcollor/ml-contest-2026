@@ -14,7 +14,9 @@ def main():
     parser.add_argument("--trained", action="store_true", help="Export model/retrained.pt")
     args = parser.parse_args()
 
-    checkpoint_path = TRAINED_CHECKPOINT if args.trained else MODEL_DIR / "weights.pt"
+    checkpoint_path = (
+        TRAINED_CHECKPOINT if args.trained else MODEL_DIR / "training" / "weights.pt"
+    )
     output_path = MODEL_DIR / ("retrained.onnx" if args.trained else "model.onnx")
     checkpoint = torch.load(checkpoint_path, map_location="cpu", weights_only=True)
     if "state_dict" in checkpoint:
