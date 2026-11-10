@@ -1,37 +1,55 @@
-# Inference with ONNX Runtime
+# Native C inference
 
-From the repository root, install the production dependencies and the additional
-tools needed in the export environment:
+The contest entry point is `model.py`. On Linux or WSL, it compiles
+`native/inference.c` into a shared library during setup and loads
+`model/weights.bin` once. Each `Model.predict(sample)` call passes the raw
+`float32` series to C via `ctypes`. The engine runs the V024 preprocessing,
+the TemporalCNN and the final argmax. It uses AVX2/FMA kernels for the initial,
+depthwise, and pointwise convolutions on compatible CPUs, with a scalar
+fallback.
+
+Run the contest evaluator from the repository root with NumPy, a C compiler
+(`cc` or `CC`) and the dataset available:
 
 ```bash
 python -m pip install -r requirements.txt
-python -m pip install torch onnx
-python export_onnx.py
-```
-
-`export_onnx.py` imports `TemporalCNN` from `model/architecture.py`, loads
-`model/weights.pt` on CPU, and calls `.eval()`. It exports `model.onnx` to the
-repository root using `torch.onnx.export`, with opset 17, an input shape of
-`(1, 4, 256)`, and a dynamic batch dimension for both input and output. PyTorch
-and ONNX are only needed for export; include the generated file alongside the
-code before evaluation.
-
-`model.py` preserves the official `Model` class and `predict(self, sample)`
-method. It loads ONNX Runtime with `CPUExecutionProvider` and one thread each
-for intra-op and inter-op execution. It compiles the Numba preprocessor from
-`src/normalize_data.py` during initialization; each prediction normalizes
-`sample.series`, runs the session, and returns the `argmax` as an `int`.
-Inference does not import PyTorch.
-
-To evaluate locally, with the official dataset `data/train_100k.npz` available:
-
-```bash
 python harness.py evaluate --model model.py
 ```
 
-Optionally, `python export_onnx.py --trained` exports `model/retrained.pt` to
-`retrained.onnx`, which is loaded by `Model(trained=True)`. The official harness
-uses `Model()` and therefore loads `model.onnx`.
+## Export the weights
 
-Production dependencies are listed in the root `requirements.txt`.
-Keep the folder structure intact so the preprocessor and models can be found.
+The repository includes the weights for `model.onnx`. To repack that graph:
+
+```bash
+python -m pip install onnx
+python export_c.py
+```
+
+The exporter checks that the ONNX graph matches the supported architecture,
+including the fixed downsampling filters. It uses the already folded
+convolution and BatchNorm weights, packs the pointwise filters in groups of
+four output channels, and writes 7,064 FP32 values with checksums.
+
+To regenerate both artifacts from the PyTorch checkpoint:
+
+```bash
+python -m pip install torch numba onnx
+python export_onnx.py
+python export_c.py
+```
+
+Pass `--trained` to both commands for `model/retrained.pt`. The resulting
+`model/retrained.bin` is used by `Model(trained=True)`. An older export with
+only `retrained.onnx` can still run if `onnxruntime` and `numba` are installed.
+
+## Check against ONNX Runtime
+
+```bash
+python -m pip install onnxruntime numba
+python validate_native.py
+python validate_native.py --full
+```
+
+The full check compares classes on the entire dataset and 10,000 synthetic
+stress samples. It also compares normalized inputs and logits on the first
+batch of each set. The default contest model runs with NumPy and the C compiler.

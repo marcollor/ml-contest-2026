@@ -8,5 +8,11 @@ with the best lower score. Run `python src/train.py --check-only` to check setup
 
 The output is `model/retrained.pt`, which contains the selected weights, recipe,
 file fingerprints and runtime versions. The history records loss, accuracy
-and score per epoch, with class recall for the selected epoch. Evaluate it with
-`python src/evaluate.py --trained`.
+and score per epoch, with class recall for the selected epoch. Export and
+evaluate the selected checkpoint with:
+
+```bash
+python export_onnx.py --trained
+python export_c.py --trained
+python src/evaluate.py --trained
+```

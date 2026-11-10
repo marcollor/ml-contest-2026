@@ -8,10 +8,10 @@ The model is a temporal CNN with 7,352 trainable parameters and a branch that
 captures temporal and cross-channel relationships. It accepts four channels
 with 256 time steps and returns a class from 0 to 7.
 
-Inference uses the original PyTorch network in evaluation and inference mode on
-CPU, with one PyTorch thread. Preprocessing uses the shared Numba normalizer in
-`src/normalize_data.py`, which `Model()` warms up during initialization. Keep
-the repository layout when moving or deploying the model so it can find that file.
+The contest entry point uses the native C engine and `model/weights.bin`.
+PyTorch defines the trainable network, and ONNX is the reference used to pack
+and verify its native weights. See the [root README](../README.md) for export
+and validation commands.
 
 ## Running the model
 
@@ -23,15 +23,10 @@ python src/prepare_data.py
 python src/evaluate.py
 ```
 
-The official contest entry point is `model.py` at the repository root.
 `python src/train.py` trains the same architecture with the fixed recipe and
-saves a checkpoint to `model/retrained.pt`. Evaluate those weights with
+saves a checkpoint to `model/retrained.pt`. Run `python export_onnx.py --trained`
+and `python export_c.py --trained` before evaluating it with
 `python src/evaluate.py --trained`.
-
-`Model()` loads `weights.pt` and uses the fixed V024 preprocessing in
-`src/normalize_data.py`. `predict(sample)` preprocesses the raw series and calls
-`self.net`, the standard `TemporalCNN` PyTorch module. These are the entry points
-for future optimization; no alternative backend is selected automatically.
 
 ## Preprocessing
 
