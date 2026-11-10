@@ -5,15 +5,25 @@ from pathlib import Path
 from native.runtime import NativeEngine
 
 ROOT = Path(__file__).resolve().parent
-TRAINED_CHECKPOINT = ROOT / "model" / "retrained.pt"
+MODEL_DIR = ROOT / "model"
+TRAINED_CHECKPOINT = MODEL_DIR / "retrained.pt"
+
+
+def reference_graph(trained=False):
+    """Find the reference graph, including retrained exports from older layouts."""
+    path = MODEL_DIR / ("retrained.onnx" if trained else "model.onnx")
+    legacy = ROOT / "retrained.onnx"
+    if trained and not path.is_file() and legacy.is_file():
+        return legacy
+    return path
 
 
 class Model:
     """Predict a class from one raw (4, 256) sample."""
 
     def __init__(self, trained=False):
-        onnx_path = ROOT / ("retrained.onnx" if trained else "model.onnx")
-        weights_path = ROOT / "model" / ("retrained.bin" if trained else "weights.bin")
+        onnx_path = reference_graph(trained)
+        weights_path = MODEL_DIR / ("retrained.bin" if trained else "weights.bin")
         if trained and not weights_path.is_file():
             # Keep existing retrained ONNX exports usable until they are packed.
             self.engine = _LegacyOnnx(onnx_path)

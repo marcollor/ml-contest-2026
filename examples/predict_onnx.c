@@ -1,4 +1,4 @@
-/* Linux/WSL example. Run: ./predict_onnx model.onnx < sample.txt
+/* Linux/WSL example. Run: ./predict_onnx model/model.onnx < sample.txt
  * Input: 4 channels of 256 whitespace-separated floats, channel by channel.
  * Use nan for missing values. Output: one class ID (0 through 7).
  */
@@ -145,7 +145,7 @@ cleanup:
 int main(int argc, char **argv)
 {
     if (argc != 2) {
-        fprintf(stderr, "Usage: %s model.onnx < sample.txt\n", argv[0]);
+        fprintf(stderr, "Usage: %s model/model.onnx < sample.txt\n", argv[0]);
         return EXIT_FAILURE;
     }
 

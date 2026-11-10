@@ -12,7 +12,7 @@ and score per epoch, with class recall for the selected epoch. Export and
 evaluate the selected checkpoint with:
 
 ```bash
-python export_onnx.py --trained
-python export_c.py --trained
+python -m tools.export_onnx --trained
+python -m tools.export_c --trained
 python src/evaluate.py --trained
 ```

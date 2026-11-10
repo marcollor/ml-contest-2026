@@ -24,8 +24,8 @@ python src/evaluate.py
 ```
 
 `python src/train.py` trains the same architecture with the fixed recipe and
-saves a checkpoint to `model/retrained.pt`. Run `python export_onnx.py --trained`
-and `python export_c.py --trained` before evaluating it with
+saves a checkpoint to `model/retrained.pt`. Run `python -m tools.export_onnx --trained`
+and `python -m tools.export_c --trained` before evaluating it with
 `python src/evaluate.py --trained`.
 
 ## Preprocessing
@@ -60,8 +60,7 @@ this package's runtime:
 | Demo, 400 windows | 86.50% (346/400) |
 
 The demo was a known diagnostic set. These results do not guarantee equivalent
-performance on new acquisitions; class 6 remains a weak point. The earlier
-optimized backend's latency measurements do not apply to this PyTorch runtime.
+performance on new acquisitions; class 6 remains a weak point.
 
 SHA-256 of `weights.pt`:
 `dd09948e3c59b1956cec702e06a254f53d2b728aafce40430e437de4263cd9ca`.

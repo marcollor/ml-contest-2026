@@ -1,0 +1,6 @@
+-r ../requirements.txt
+numba
+onnx
+onnxruntime
+scikit-learn
+torch

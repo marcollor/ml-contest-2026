@@ -10,10 +10,8 @@ import numpy as np
 import onnx
 from onnx import numpy_helper
 
+from model import MODEL_DIR, reference_graph
 from native.runtime import WEIGHT_COUNT, WEIGHT_HEADER, WEIGHT_MAGIC
-
-
-ROOT = Path(__file__).resolve().parent
 # Topology, attributes, and graph constants of the supported opset 17 export.
 GRAPH_SIGNATURE = "7c564cd5c25bd80aa5cd78d634c3da80e50ffc314dff0d948e85975ff1daec86"
 
@@ -109,12 +107,12 @@ def export_c(onnx_path, output):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--trained", action="store_true", help="Use retrained.onnx.")
+    parser.add_argument("--trained", action="store_true", help="Use the retrained ONNX graph.")
     parser.add_argument("--onnx", type=Path, help="Override the input path.")
     parser.add_argument("--out", type=Path, help="Override the output path.")
     args = parser.parse_args()
-    onnx_path = args.onnx or ROOT / ("retrained.onnx" if args.trained else "model.onnx")
-    output = args.out or ROOT / "model" / ("retrained.bin" if args.trained else "weights.bin")
+    onnx_path = args.onnx or reference_graph(args.trained)
+    output = args.out or MODEL_DIR / ("retrained.bin" if args.trained else "weights.bin")
     export_c(onnx_path, output)
     print(f"Packed {WEIGHT_COUNT} FP32 weights from {onnx_path.name} into {output}.")
 

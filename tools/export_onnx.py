@@ -1,15 +1,11 @@
 """Export the competition TemporalCNN to ONNX (export environment only)."""
 
 import argparse
-from pathlib import Path
-import sys
 
 import torch
 
-ROOT = Path(__file__).resolve().parent
-# model.py is the competition entry point; architecture lives in model/.
-sys.path.insert(0, str(ROOT / "model"))
-from architecture import TemporalCNN
+from model import MODEL_DIR, TRAINED_CHECKPOINT
+from src.architecture import TemporalCNN
 from src.normalize_data import PREPROCESSING
 
 
@@ -18,8 +14,8 @@ def main():
     parser.add_argument("--trained", action="store_true", help="Export model/retrained.pt")
     args = parser.parse_args()
 
-    checkpoint_path = ROOT / "model" / ("retrained.pt" if args.trained else "weights.pt")
-    output_path = ROOT / ("retrained.onnx" if args.trained else "model.onnx")
+    checkpoint_path = TRAINED_CHECKPOINT if args.trained else MODEL_DIR / "weights.pt"
+    output_path = MODEL_DIR / ("retrained.onnx" if args.trained else "model.onnx")
     checkpoint = torch.load(checkpoint_path, map_location="cpu", weights_only=True)
     if "state_dict" in checkpoint:
         if checkpoint.get("preprocessing") != PREPROCESSING:

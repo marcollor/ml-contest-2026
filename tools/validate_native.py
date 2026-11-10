@@ -8,11 +8,9 @@ import numpy as np
 import onnxruntime as ort
 
 from competition_api import load_dataset
+from model import MODEL_DIR, ROOT, reference_graph
 from native.runtime import NativeEngine, load_library
 from src.normalize_data import preprocess_series
-
-
-ROOT = Path(__file__).resolve().parent
 
 
 def stress_samples(count):
@@ -64,8 +62,8 @@ def main():
     parser.add_argument("--trained", action="store_true", help="Validate the retrained model.")
     parser.add_argument("--dataset", type=Path, default=ROOT / "data" / "train_100k.npz")
     args = parser.parse_args()
-    onnx_path = ROOT / ("retrained.onnx" if args.trained else "model.onnx")
-    weights = ROOT / "model" / ("retrained.bin" if args.trained else "weights.bin")
+    onnx_path = reference_graph(args.trained)
+    weights = MODEL_DIR / ("retrained.bin" if args.trained else "weights.bin")
     engines = [NativeEngine(weights, onnx_path, mode="scalar")]
     if load_library().engine_has_avx2():
         engines.append(NativeEngine(weights, onnx_path, mode="avx2_fma"))

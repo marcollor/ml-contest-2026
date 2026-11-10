@@ -24,7 +24,8 @@ sys.path.insert(0, str(ROOT))
 
 from competition_api import load_dataset
 from harness import class_geomean_score
-from model import MODEL_DIR, TRAINED_CHECKPOINT, TemporalCNN
+from model import TRAINED_CHECKPOINT
+from src.architecture import TemporalCNN
 from normalize_data import PREPROCESSING, preprocess_series
 
 EPOCHS = 80
@@ -124,7 +125,7 @@ def main(argv=None):
 
     source = Path(__file__).resolve().parent
     inputs = {
-        "data": data_path, "split": split_path, "architecture": MODEL_DIR / "architecture.py",
+        "data": data_path, "split": split_path, "architecture": source / "architecture.py",
         "train": source / "train.py", "augmentation": source / "augment_data.py",
         "normalization": source / "normalize_data.py", "score": source.parent / "harness.py",
         "data_loader": source.parent / "competition_api.py",

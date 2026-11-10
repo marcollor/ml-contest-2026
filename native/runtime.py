@@ -60,15 +60,15 @@ def load_library():
 def _read_weights(weights_path, onnx_path):
     data = weights_path.read_bytes()
     if len(data) != WEIGHT_HEADER.size + 4 * WEIGHT_COUNT:
-        raise ValueError(f"Incorrect size for {weights_path.name}. Run export_c.py.")
+        raise ValueError(f"Incorrect size for {weights_path.name}. Run python -m tools.export_c.")
     magic, onnx_hash, payload_hash, count = WEIGHT_HEADER.unpack_from(data)
     payload = memoryview(data)[WEIGHT_HEADER.size:]
     if (magic != WEIGHT_MAGIC or count != WEIGHT_COUNT
             or hashlib.sha256(payload).digest() != payload_hash):
-        raise ValueError(f"Invalid {weights_path.name}. Run export_c.py.")
+        raise ValueError(f"Invalid {weights_path.name}. Run python -m tools.export_c.")
     if onnx_path is not None and onnx_path.is_file():
         if hashlib.sha256(onnx_path.read_bytes()).digest() != onnx_hash:
-            raise ValueError(f"{weights_path.name} does not match {onnx_path.name}. Run export_c.py.")
+            raise ValueError(f"{weights_path.name} does not match {onnx_path.name}. Run python -m tools.export_c.")
     return np.frombuffer(payload, dtype="<f4").astype(np.float32, copy=False)
 
 
