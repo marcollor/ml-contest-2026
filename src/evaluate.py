@@ -1,4 +1,4 @@
-"""Evaluate adaptative_model on the local demo dataset."""
+"""Evaluate TemporalCNN on the local demo dataset."""
 from pathlib import Path
 import sys
 
@@ -10,7 +10,7 @@ sys.path.insert(0, str(ROOT))
 
 def main(argv=None):
     parser = HelpArgumentParser(description=__doc__)
-    parser.add_argument("--trained", action="store_true", help="Evaluate the checkpoint saved by train.py.")
+    parser.add_argument("--trained", action="store_true", help="Evaluate inference artifacts exported from model/retrained.pt.")
     args = parser.parse_args(argv)
 
     demo_path = ROOT / "data/test_demo.npz"

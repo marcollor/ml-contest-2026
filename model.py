@@ -1,4 +1,4 @@
-"""Competition entry point using a specialized native CPU engine."""
+"""Competition entry point for TemporalCNN with native CPU inference."""
 
 from pathlib import Path
 
@@ -10,11 +10,11 @@ TRAINED_CHECKPOINT = MODEL_DIR / "retrained.pt"
 
 
 def reference_graph(trained=False):
-    """Find the reference graph, including retrained exports from older layouts."""
+    """Find the reference graph for the bundled or retrained TemporalCNN."""
     path = MODEL_DIR / ("retrained.onnx" if trained else "model.onnx")
-    legacy = ROOT / "retrained.onnx"
-    if trained and not path.is_file() and legacy.is_file():
-        return legacy
+    root_export = ROOT / "retrained.onnx"
+    if trained and not path.is_file() and root_export.is_file():
+        return root_export
     return path
 
 
@@ -25,8 +25,7 @@ class Model:
         onnx_path = reference_graph(trained)
         weights_path = MODEL_DIR / ("retrained.bin" if trained else "weights.bin")
         if trained and not weights_path.is_file():
-            # Keep existing retrained ONNX exports usable until they are packed.
-            self.engine = _LegacyOnnx(onnx_path)
+            self.engine = _OnnxEngine(onnx_path)
         else:
             self.engine = NativeEngine(weights_path, onnx_path)
 
@@ -34,7 +33,7 @@ class Model:
         return self.engine.predict(sample.series)
 
 
-class _LegacyOnnx:
+class _OnnxEngine:
     def __init__(self, model_path):
         import numpy as np
         import onnxruntime as ort

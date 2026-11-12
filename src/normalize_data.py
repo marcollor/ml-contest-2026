@@ -1,4 +1,4 @@
-"""Fixed V024 preprocessing for raw (4, 256) signals."""
+"""Robust per-channel preprocessing for raw TemporalCNN inputs."""
 
 import numpy as np
 from numba import njit

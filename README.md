@@ -1,4 +1,4 @@
-# Optimized ML Solution — GDG on Campus UAM Machine Learning Contest (November 2026)
+# TemporalCNN — GDG on Campus UAM Machine Learning Contest (November 2026)
 
 ![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)
 ![Training](https://img.shields.io/badge/Training-PyTorch-EE4C2C?logo=pytorch&logoColor=white)
@@ -20,9 +20,8 @@ The solution combines a residual temporal CNN, robust signal reconstruction, an 
 | Model footprint | **28.3 KB packed FP32 binary** (`weights.bin` with SHA-256 header) |
 | Runtime dependency | NumPy + Linux/WSL with a C11 compiler |
 | CPU execution | Sequential inference; AVX2/FMA dispatch with scalar fallback |
-| Mean native prediction latency | **42.19 µs** |
-| IID test accuracy | **91.65%** |
-| Demo accuracy | **86.50%** |
+
+See [local evaluation results](#local-evaluation-results) for accuracy, score, and latency by dataset.
 
 ## Competition Challenge & Evaluation Contract
 
@@ -114,7 +113,7 @@ The relation branch explicitly models dependencies that remain useful after chan
 
 ### Robust preprocessing
 
-[src/normalize_data.py](src/normalize_data.py) defines the fixed V024 recipe. [native/preprocess.h](native/preprocess.h) implements its native equivalent. Both process each channel independently and preserve the raw input.
+[src/normalize_data.py](src/normalize_data.py) defines the preprocessing used by TemporalCNN. [native/preprocess.h](native/preprocess.h) implements the same steps in C. Both process each channel independently and preserve the raw input.
 
 1. **Identify finite observations.** Treat both NaNs and positive/negative infinity as missing. An entirely missing channel becomes zero.
 
@@ -148,13 +147,13 @@ flowchart LR
 
 ### PyTorch to ONNX
 
-[tools/export_onnx.py](tools/export_onnx.py) loads the checkpoint on CPU, checks preprocessing metadata when present, restores the current architecture, and switches to evaluation mode. Export uses the legacy PyTorch ONNX exporter (`dynamo=False`), opset 17, and input/output names `series` and `logits`.
+[tools/export_onnx.py](tools/export_onnx.py) loads the checkpoint on CPU, checks preprocessing metadata when present, restores TemporalCNN, and switches to evaluation mode. Export uses PyTorch with `dynamo=False`, opset 17, and input/output names `series` and `logits`.
 
 The graph has a **fixed topology and fixed signal dimensions**, but its batch axis is explicitly dynamic: `(N, 4, 256) → (N, 8)`. Competition inference still uses `N = 1`. Preprocessing is outside the graph. BatchNorm is folded into convolution weights and biases in the supported export.
 
 ### ONNX Runtime configuration
 
-The `_LegacyOnnx` backend in [model.py](model.py) selects `CPUExecutionProvider` and sets both:
+The ONNX backend in [model.py](model.py) selects `CPUExecutionProvider` and sets both:
 
 ```python
 options.intra_op_num_threads = 1
@@ -190,7 +189,7 @@ Stress inputs cover missing channels, all-zero/all-missing signals, infinities, 
 ├── harness.py                    # Official evaluation interface and scoring implementation
 ├── colab.ipynb                   # Notebook for running the repository in Colab
 ├── model/
-│   ├── README.md                 # Checkpoint provenance and historical accuracy
+│   ├── README.md                 # TemporalCNN artifacts and how to use them
 │   ├── model.onnx                # Exported reference graph
 │   ├── weights.bin               # Packed native inference weights
 │   └── training/
@@ -254,11 +253,28 @@ python harness.py evaluate --model model.py
 
 Dataset checksums are listed in [data/README.md](data/README.md). Use the training-file run for throughput diagnostics and the held-out IID and demo sets for generalization metrics.
 
+### Local evaluation results
+
+These measurements come from a fresh clone at commit `f42e0f0`, using the bundled weights and the default three-run harness in WSL. Each run processed every row in its dataset.
+
+| Dataset | Samples per run | Accuracy | Mean score | Mean `predict` latency |
+| --- | ---: | ---: | ---: | ---: |
+| Demo (`data/test_demo.npz`) | 400 | 86.50% | 4.073 | 119.8 µs |
+| Held-out IID (`data/val.npz`) | 20,000 | 91.65% | 35.967 | 121.7 µs |
+
+To repeat the IID evaluation, install the development requirements, run `python src/prepare_data.py`, and run `python harness.py evaluate --model model.py --source file:data/val.npz`. Latency depends on the machine. The official evaluation runs in Google Colab on samples supplied by the organizers.
+
+### Check the submission in Colab
+
+Run the materials and data cells in [colab.ipynb](colab.ipynb), then run the submission check. It clones the submission into a fresh directory, prints the commit, installs its inference requirements, and evaluates it with the contest harness on the local training file. The baseline cell is optional.
+
+The organizers need access to clone the repository. Send them the repository URL following the [official submission instructions](https://github.com/GDG-UAM/ml-contest-materials#your-submission).
+
 ### Development: Export, Validate, and Retrain
 
 The [development requirements](src/requirements.txt) add PyTorch, Numba, ONNX, ONNX Runtime, and scikit-learn to the minimal NumPy environment.
 
-**Regenerate and validate the shipped model:**
+**Regenerate and validate the inference artifacts from the bundled checkpoint:**
 
 ```bash
 python -m pip install -r src/requirements.txt
@@ -281,7 +297,7 @@ python -m tools.validate_native --trained
 python src/evaluate.py --trained
 ```
 
-Data preparation creates disjoint stratified partitions: **70,000 training**, **5,000 development**, **20,000 IID test**, and **5,000 reserve** samples. It also writes `data/val.npz` for harness-based IID evaluation.
+Data preparation creates four disjoint partitions with stratified development and IID test splits. It allocates **70,000 training**, **5,000 development**, **20,000 IID test**, and **5,000 reserve** samples and writes `data/val.npz` for harness-based IID evaluation.
 
 | Training setting | Value |
 | --- | --- |
@@ -293,13 +309,11 @@ Data preparation creates disjoint stratified partitions: **70,000 training**, **
 | Checkpoint selection | Maximize the lower clean/stress development score; break ties with the lower accuracy |
 | Training device | CUDA when available, otherwise CPU |
 
-The shipped checkpoint was selected at epoch 61. [Training metadata](model/training/training.json) and [epoch history](model/training/history.json) document its recipe, fingerprints, and validation results.
-
-Retraining writes `model/retrained.pt`; the `--trained` export commands create matching ONNX and native artifacts. `src/evaluate.py --trained` selects this new model. The standard harness command loads `Model()` and evaluates the shipped weights. Training can use multiple CPU threads or a GPU; contest inference remains single-threaded on CPU.
+Retraining uses the TemporalCNN architecture and writes a new checkpoint to `model/retrained.pt`. Use the bundled checkpoint to regenerate the artifacts for the shipped model. The `--trained` export commands create matching ONNX and native artifacts for the new checkpoint, and `src/evaluate.py --trained` selects them. The standard harness command loads `Model()` with the shipped weights. Training can use multiple CPU threads or a GPU. Contest inference runs on a single CPU thread.
 
 ## Authors & Acknowledgments
 
-- **[Author Name 1]** — [GitHub](https://github.com/YOUR_GITHUB_USERNAME_1) · [LinkedIn](https://www.linkedin.com/in/YOUR_LINKEDIN_PROFILE_1/)
+- **Marco Antonio Llorente Simón** — [GitHub](https://github.com/marcollor) · [LinkedIn](https://www.linkedin.com/in/marco-llorente-3b722544b/)
 - **Marcos Leo Sonck Walker** — [GitHub](https://github.com/Leoreo11) · [LinkedIn](https://www.linkedin.com/in/marcos-leo-a5a6352b6)
 
 Thanks to **GDG on Campus UAM** for organizing the competition and providing the datasets, evaluation harness, and baseline materials. This project builds on the work of the **NumPy, PyTorch, Numba, ONNX, ONNX Runtime, and scikit-learn** communities.

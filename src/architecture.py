@@ -41,11 +41,8 @@ class ResidualTemporalBlock(nn.Module):
         return self.activation(x + self.body(x))
 
 
-class TemporalCNN(nn.Module):
-    """Accept (N, 4, 256) normalized signals and return (N, 8) logits.
-
-    Uses the existing four-channel preprocessing and training interface.
-    """
+class BaseTemporalCNN(nn.Module):
+    """Accept (N, 4, 256) normalized signals and return (N, 8) logits."""
 
     def __init__(self):
         super().__init__()
@@ -71,8 +68,9 @@ class TemporalCNN(nn.Module):
         return self.fc(torch.cat((mean, std), dim=1))
 
 
-BaseTemporalCNN = TemporalCNN
 class TemporalCNN(BaseTemporalCNN):
+    """Combine pooled temporal features and lagged signal relations."""
+
     def __init__(self):
         super().__init__()
         self.relations = nn.Sequential(nn.Linear(30, 16), nn.ReLU())

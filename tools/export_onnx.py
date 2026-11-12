@@ -21,7 +21,7 @@ def main():
     checkpoint = torch.load(checkpoint_path, map_location="cpu", weights_only=True)
     if "state_dict" in checkpoint:
         if checkpoint.get("preprocessing") != PREPROCESSING:
-            raise ValueError("Checkpoint preprocessing does not match the V024 recipe.")
+            raise ValueError("Checkpoint preprocessing does not match the TemporalCNN configuration.")
         weights = checkpoint["state_dict"]
     else:
         weights = checkpoint

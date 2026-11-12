@@ -1,4 +1,4 @@
-# Data
+# TemporalCNN datasets
 
 | File             | Contents                                                                   |
 | ---------------- | -------------------------------------------------------------------------- |
@@ -11,14 +11,14 @@ this folder, from the repository folder:
 
 ```bash
 # macOS / Linux / Git Bash
-curl -L -o data/train_100k.npz https://github.com/GDG-UAM/ml-contest-materials/releases/latest/download/train_100k.npz
-curl -L -o data/test_demo.npz https://github.com/GDG-UAM/ml-contest-materials/releases/latest/download/test_demo.npz
+curl -fL -o data/train_100k.npz https://github.com/GDG-UAM/ml-contest-materials/releases/latest/download/train_100k.npz
+curl -fL -o data/test_demo.npz https://github.com/GDG-UAM/ml-contest-materials/releases/latest/download/test_demo.npz
 ```
 
 ```powershell
 # Windows PowerShell (curl.exe, not the curl alias)
-curl.exe -L -o data/train_100k.npz https://github.com/GDG-UAM/ml-contest-materials/releases/latest/download/train_100k.npz
-curl.exe -L -o data/test_demo.npz https://github.com/GDG-UAM/ml-contest-materials/releases/latest/download/test_demo.npz
+curl.exe -fL -o data/train_100k.npz https://github.com/GDG-UAM/ml-contest-materials/releases/latest/download/train_100k.npz
+curl.exe -fL -o data/test_demo.npz https://github.com/GDG-UAM/ml-contest-materials/releases/latest/download/test_demo.npz
 ```
 
 Or open the release page in your browser and save both files here.
@@ -35,4 +35,8 @@ sha256sum data/train_100k.npz data/test_demo.npz # macOS: shasum -a 256 data/tra
 Get-FileHash data/train_100k.npz, data/test_demo.npz   # SHA256, same values in upper case
 ```
 
-Load them with `competition_api.load_dataset("data/train_100k.npz")`; see the main README.
+Load a dataset with `competition_api.load_dataset("data/train_100k.npz")`.
+For training or held-out IID evaluation, follow the [training guide](../src/README.md).
+`python src/prepare_data.py` creates `data/split_indices.npz` and exports the
+20,000 held-out IID samples to `data/val.npz` for the harness. Use `train_100k.npz`
+to measure throughput and `val.npz` or `test_demo.npz` to measure generalization.

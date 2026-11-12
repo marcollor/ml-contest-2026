@@ -1,4 +1,4 @@
-"""Train adaptative_model with the fixed 80-epoch recipe."""
+"""Train TemporalCNN with the fixed 80-epoch recipe."""
 import os
 
 for name in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS", "NUMBA_NUM_THREADS"):
@@ -116,7 +116,7 @@ def main(argv=None):
         print(f"Training setup verified on {device}.")
         return
 
-    print(f"Training adaptative_model for {EPOCHS} epochs on {device}.", flush=True)
+    print(f"Training TemporalCNN for {EPOCHS} epochs on {device}.", flush=True)
     weights = torch.from_numpy(inverse_frequency_weights(labels.numpy())).to(device)
     optimizer = torch.optim.AdamW(net.parameters(), **OPTIMIZER)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=EPOCHS, eta_min=MIN_LR)
