@@ -71,8 +71,6 @@ class TemporalCNN(nn.Module):
         return self.fc(torch.cat((mean, std), dim=1))
 
 
-# Hypothesis H4: direct second-order temporal/channel relations supplement
-# pooled learned features after channel-wise normalization removes gain shortcuts.
 BaseTemporalCNN = TemporalCNN
 class TemporalCNN(BaseTemporalCNN):
     def __init__(self):
