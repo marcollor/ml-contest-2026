@@ -1,1 +1,4 @@
 numpy
+numba
+onnx
+onnxruntime
