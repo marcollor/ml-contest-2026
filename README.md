@@ -117,15 +117,15 @@ The relation branch explicitly models dependencies that remain useful after chan
 [src/normalize_data.py](src/normalize_data.py) defines the fixed V024 recipe. [native/preprocess.h](native/preprocess.h) implements its native equivalent. Both process each channel independently and preserve the raw input.
 
 1. **Identify finite observations.** Treat both NaNs and positive/negative infinity as missing. An entirely missing channel becomes zero.
+
 2. **Robustly clip finite values.** Calculate the median and median absolute deviation (MAD):
 
-   $\displaystyle \text{scale} = \max\left(1.4826 \cdot \operatorname{median}\left(\left|\text{values} - \operatorname{median}(\text{values})\right|\right),\ 0.001\right)$
+   $\displaystyle \mathrm{scale} = \max\left(1.4826 \cdot \mathrm{median}\left(\left|\mathrm{values} - \mathrm{median}(\mathrm{values})\right|\right),\ 0.001\right)$
 
-   $\displaystyle \text{bounds} = \operatorname{median}(\text{values}) \pm 6 \cdot \text{scale}$
-
-   Clip observed values to these bounds before interpolation, limiting the propagation of spikes into reconstructed samples.
+   $\displaystyle \mathrm{bounds} = \mathrm{median}(\mathrm{values}) \pm 6 \cdot \mathrm{scale}$
 
    Clip observed values to these bounds before interpolation, limiting the propagation of spikes into reconstructed samples.
+
 3. **Interpolate within each channel.** Fill internal gaps linearly. Extend the nearest finite value at either boundary. A single finite observation therefore produces a constant reconstructed channel.
 4. **Apply channel-wise z-score normalization.** Subtract the temporal mean and divide by `sqrt(mean(centered²) + 1e-6)`.
 5. **Bound and cast.** Clip to `[-10, 10]` and return a tensor of shape `(1, 4, 256)` in `float32`.
