@@ -25,8 +25,10 @@ class Model:
         onnx_path = reference_graph(trained)
         weights_path = MODEL_DIR / ("retrained.bin" if trained else "weights.bin")
         if trained and not weights_path.is_file():
+            print("OnnxEngine")
             self.engine = _OnnxEngine(onnx_path)
         else:
+            print("NativeEngine")
             self.engine = NativeEngine(weights_path, onnx_path)
 
     def predict(self, sample):
